@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head> 
+	
+	<script src="./browserMqtt.js" type="text/javascript"> </script>
+	<script src="./deviceUuid.js" type="text/javascript"> </script>
+
+</head>
+<body>
+
+	<form onsubmit="sub()">
+		Enter rest1: <input type="text" id="1">
+		Enter rest1: <input type="text" id="2">
+		Enter rest1: <input type="text" id="3">
+		Enter rest1: <input type="text" id="4">
+		Enter rest1: <input type="text" id="5">
+		<input type="submit" value="submit" />
+	</form>
+
+	<ul id="mylist">
+
+	</ul>	
+
+	<script type="text/javascript">
+        var connectionRequests = 0;
+        
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', "http://localhost:3000/public/browserMqtt.js", true);
+        xhr.send();
+
+        xhr = new XMLHttpRequest();
+        xhr.open('GET', "http://localhost:3000/public/deviceUuid.js", true);
+        xhr.send();
+
+	var msgs = 0;
+	var startId, lastId;
+
+	var deviceId = new DeviceUUID().get();
+
+		var client_id = deviceId;
+		//var client_id = a.toString();
+		var options = {
+			keepalive: 0,
+			protocolId: 'MQTT',
+			protocolVersion: 4,
+			clientId: client_id,
+			reconnectPeriod: 1000,
+			connectTimeout: 30 * 1000,
+			clean: false,
+			will: {
+			    topic: 'WillMsg',
+			    payload: 'Connection Closed abnormally..!',
+			    qos: 0,
+			    retain: false
+  			},
+			username: 'passVasool',
+			password: '@@@@@@@@',
+			rejectUnauthorized: false
+			//resubscribe: true,  we are doing it by code.
+		};
+		
+		var client = mqtt.connect('ws://localhost:8000/', options);
+		//var client = mqtt.connect('ws://localhost/mosca/', options);
+
+		client.on("connect", function (connack) {
+			console.log('connected');
+			//console.log(client);
+			
+			// setTimeout(function(){
+			// 	sub();
+			// }, 2);
+				
+  		});
+
+  		client.on("error", function(err){
+  			console.log(err.message);
+  			console.log(err);
+  		});
+
+  		client.on('close', function(){
+  			console.log('closed');
+  		});
+
+  		client.on('reconnect', function(){
+  			
+  		});
+
+  		client.stream.on("error", function(err){
+  			console.log(err);
+  		});
+  		
+		client.on("message", function (topic, msg, packet) {
+			if(packet.cmd == 'publish'){
+				order = JSON.parse(packet.payload);
+
+				var node = document.createElement("LI");
+				var textnode = document.createTextNode("restId: "+order.restId);
+				node.appendChild(textnode);
+				textnode = document.createTextNode(" orderId: "+order.orderId);
+				node.appendChild(textnode);
+				textnode = document.createTextNode(" cart: "+order.cart);
+				node.appendChild(textnode);
+				document.getElementById("mylist").appendChild(node);
+			}
+  		});
+
+		function sub(){
+				setTimeout(function(){
+					client.subscribe('rest/0', {qos:2}, function(err, granted){});
+				}, 5);
+				setTimeout(function(){
+					client.subscribe('rest/1', {qos:2}, function(err, granted){});
+				}, 10);
+				setTimeout(function(){
+					client.subscribe('rest/2', {qos:2}, function(err, granted){});
+				}, 15);
+		}
+
+	</script>
+	
+</body>
+</html>
